@@ -14,32 +14,30 @@
     <van-popup v-model:show="uploadVisible" class="popup">
       <van-uploader v-model="fileList" :max-count="1" :after-read="afterRead">
       </van-uploader>
+      <van-field v-model="token" label="密钥" placeholder="请输入密钥" />
       <van-button plain type="primary" @click="uploadImage" class="upload-btn">上传并替换图片</van-button>
     </van-popup>
   </div>
 </template>
 
 <script setup>
-// Vue 代码（与之前保持一致）
 import { ref } from 'vue';
-import { Uploader } from 'vant';
+import { showToast } from 'vant';
 
 const selectedFile = ref(null);
 const fileList = ref([]);
 const message = ref('');
 const uploadVisible = ref(false); // 控制上传功能的显示和隐藏
-const token = import.meta.env.VITE_GH_TOKEN;
+const token = ref('')
 
 function afterRead(file) {
-  console.log(file)
-  selectedFile.value = file
+  selectedFile.value = file.file
 }
 const handleFileUpload = (event) => {
   selectedFile.value = event.target.files[0];
 };
 
 const toggleUploadVisibility = () => {
-  console.log('111')
   uploadVisible.value = !uploadVisible.value;
 };
 
@@ -60,6 +58,11 @@ const uploadImage = async () => {
       // 使用jsdelivr时，确保清空缓存并刷新
       const url = `https://cdn.jsdelivr.net/gh/Lyuan123/page-deploy@main/src/assets/image.jpg?${new Date().getTime()}`;
       message.value = '图片上传并成功替换！';
+      uploadVisible.value = false
+      showToast({
+        message: '替换成功，请刷新该页面',
+        position: 'top',
+      });
     } catch (error) {
       console.error(error);
       message.value = '图片上传失败，请重试。';
@@ -71,7 +74,7 @@ const uploadImage = async () => {
 const getFileSHA = async (path) => {
   const response = await fetch(
     `https://api.github.com/repos/Lyuan123/page-deploy/contents/${path}`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${token.value}` } }
   );
 
   if (!response.ok) return null; // 文件不存在时返回null
@@ -87,7 +90,7 @@ const updateGitHubFile = async (path, content) => {
   const response = await fetch(url, {
     method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${token.value}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

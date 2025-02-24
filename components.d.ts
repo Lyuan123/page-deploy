@@ -11,6 +11,7 @@ declare module 'vue' {
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     ImageUpload: typeof import('./src/components/imageUpload.vue')['default']
     VanButton: typeof import('vant/es')['Button']
+    VanField: typeof import('vant/es')['Field']
     VanPopup: typeof import('vant/es')['Popup']
     VanUploader: typeof import('vant/es')['Uploader']
   }
