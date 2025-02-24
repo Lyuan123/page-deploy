@@ -45,7 +45,7 @@ const uploadImage = async () => {
 
 const updateGitHubFile = async (path, content) => {
   const url = `https://api.github.com/repos/Lyuan123/page-deploy/main/src/assets/image.jpg`;
-  const token = '';
+  const token = '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'; // 请替换为你的 GitHub Token
 
   const response = await fetch(url, {
     method: 'PUT',
