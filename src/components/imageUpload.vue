@@ -64,7 +64,7 @@ const uploadImage = async () => {
       uploadVisible.value = false
       isSuccess.value = !isSuccess.value
       showToast({
-        message: `替换成功，请2-3分钟后再次访问`,
+        message: `替换成功，请30s后再次访问`,
         className: 'toast-message',
       })
     } catch (error) {
