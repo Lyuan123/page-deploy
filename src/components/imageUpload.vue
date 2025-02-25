@@ -1,14 +1,7 @@
 <template>
   <div class="container">
     <img class="image" src="../assets/image.jpg" alt="Current Image">
-
-    <!-- 控制上传功能显示的按钮 -->
-    <div v-if="uploadVisible" class="upload-container">
-
-    </div>
-
-    <!-- 浮动图标 -->
-    <div class="toggle-icon" @click="toggleUploadVisibility">
+    <div v-if="!isSuccess" class="toggle-icon" @dblclick="toggleUploadVisibility">
       <img src="../assets/logo.gif" alt="Toggle Upload">
     </div>
     <van-popup v-model:show="uploadVisible" class="popup">
@@ -27,7 +20,8 @@ import { showToast } from 'vant';
 const selectedFile = ref(null);
 const fileList = ref([]);
 const message = ref('');
-const uploadVisible = ref(false); // 控制上传功能的显示和隐藏
+const uploadVisible = ref(false);
+const isSuccess = ref(false);
 const token = ref('')
 
 function afterRead(file) {
@@ -55,14 +49,12 @@ const uploadImage = async () => {
 
     try {
       const response = await updateGitHubFile(path, content);
-      // 使用jsdelivr时，确保清空缓存并刷新
-      const url = `https://cdn.jsdelivr.net/gh/Lyuan123/page-deploy@main/src/assets/image.jpg?${new Date().getTime()}`;
-      message.value = '图片上传并成功替换！';
       uploadVisible.value = false
       showToast({
-        message: '替换成功，请刷新该页面',
+        message: '替换成功，请3分钟后再次访问',
         position: 'top',
       });
+      isSuccess.value = !isSuccess.value
     } catch (error) {
       // console.error(error);
       message.value = '图片上传失败，请重试。';
@@ -96,8 +88,8 @@ const updateGitHubFile = async (path, content) => {
     body: JSON.stringify({
       message: '上传新图片',
       content: content,
-      branch: 'main', // 你的分支名
-      sha: existingSHA // 动态注入SHA值
+      branch: 'main',
+      sha: existingSHA
     }),
     signal: controller.signal, // 传递 AbortSignal
   });
