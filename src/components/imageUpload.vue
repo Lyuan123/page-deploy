@@ -64,7 +64,7 @@ const uploadImage = async () => {
         position: 'top',
       });
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       message.value = '图片上传失败，请重试。';
     }
   };
