@@ -4,63 +4,79 @@
     <div v-if="!isSuccess" class="toggle-icon" @dblclick="toggleUploadVisibility">
       <img src="../assets/logo.gif" alt="Toggle Upload">
     </div>
-    <van-popup v-model:show="uploadVisible" class="popup">
-      <van-uploader v-model="fileList" :max-count="1" :after-read="afterRead">
+    <van-popup v-model:show="uploadVisible" class="popup" position="bottom">
+      <van-uploader v-model="fileList" :max-count="1">
       </van-uploader>
       <van-field v-model="token" label="密钥" placeholder="请输入密钥" />
       <van-button plain type="primary" @click="uploadImage" class="upload-btn">上传并替换图片</van-button>
     </van-popup>
+    <div class="loading-overlay" v-if="loading">
+      <van-loading color="#1989fa" size="24px" vertical>
+        <template #icon>
+          <van-icon name="star-o" size="30" />
+        </template>
+        <span class="loading">加载中...</span>
+      </van-loading>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, unref } from 'vue';
 import { showToast } from 'vant';
 
-const selectedFile = ref(null);
-const fileList = ref([]);
-const message = ref('');
-const uploadVisible = ref(false);
-const isSuccess = ref(false);
 const token = ref('')
-
-function afterRead(file) {
-  selectedFile.value = file.file
-}
-const handleFileUpload = (event) => {
-  selectedFile.value = event.target.files[0];
-};
+const message = ref('');
+const fileList = ref([]);
+const loading = ref(false);
+const isSuccess = ref(false);
+const uploadVisible = ref(false);
 
 const toggleUploadVisibility = () => {
   uploadVisible.value = !uploadVisible.value;
 };
 
 const uploadImage = async () => {
-  if (!selectedFile.value) {
-    message.value = '请小可爱上传最少一张图片哦！';
+  if (!unref(fileList).length) {
+    showToast({
+      message: '请小可爱上传最少一张图片哦！',
+      className: 'toast-message',
+    })
+    return;
+  }
+
+  if (!token.value) {
+    showToast({
+      message: '请小可爱输入密钥哦！',
+      className: 'toast-message',
+    })
     return;
   }
 
   const reader = new FileReader();
   reader.onload = async (e) => {
     const content = e.target.result.split(',')[1]; // 获取 Base64 编码的内容
-    const fileName = `uploaded-image-${Date.now()}.jpg`;
     const path = `src/assets/image.jpg`;
 
     try {
+      loading.value = !loading.value;
       const response = await updateGitHubFile(path, content);
       uploadVisible.value = false
-      showToast({
-        message: '替换成功，请3分钟后再次访问',
-        position: 'top',
-      });
       isSuccess.value = !isSuccess.value
+      showToast({
+        message: `替换成功，请2-3分钟后再次访问`,
+        className: 'toast-message',
+      })
     } catch (error) {
-      // console.error(error);
-      message.value = '图片上传失败，请重试。';
+      showToast({
+        message: `图片上传失败，原因:${error}`,
+        className: 'toast-message',
+      })
+    } finally {
+      loading.value = !loading.value;
     }
   };
-  reader.readAsDataURL(selectedFile.value);
+  reader.readAsDataURL(fileList.value[0].file);
 };
 
 const getFileSHA = async (path) => {
@@ -78,7 +94,7 @@ const updateGitHubFile = async (path, content) => {
   const url = `https://api.github.com/repos/Lyuan123/page-deploy/contents/${path}`;
   const existingSHA = await getFileSHA(path);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 50000); // 设置超时时间为5000毫秒（即5秒）
+  const timeoutId = setTimeout(() => controller.abort(), 50000); // 设置超时时间5min
   const response = await fetch(url, {
     method: 'PUT',
     headers: {
@@ -102,16 +118,13 @@ const updateGitHubFile = async (path, content) => {
 };
 </script>
 
-<style scoped>
-/* 设置页面的布局 */
+<style>
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   overflow: hidden;
-  background-color: #f0f0f0;
-  /* 背景色 */
 }
 
 /* 设置图片样式 */
@@ -122,7 +135,7 @@ const updateGitHubFile = async (path, content) => {
 }
 
 .popup {
-  padding: 10px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -133,41 +146,16 @@ const updateGitHubFile = async (path, content) => {
   margin: 10px 0px;
 }
 
-/* 上传区域 */
-.upload-container {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  background-color: #fff;
-  border: 2px dashed #00aaff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  max-width: 500px;
+.toast-message {
+  padding: 20px !important;
+  font-weight: bold !important;
+  font-size: 24px !important;
+  background-color: black !important;
 }
 
-.upload-container input {
-  margin-bottom: 10px;
-  padding: 5px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: #f7f7f7;
-}
-
-.upload-container button {
-  padding: 10px 20px;
-  border: none;
-  background-color: #00aaff;
-  color: white;
-  font-size: 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.upload-container button:hover {
-  background-color: #0088cc;
+.loading {
+  font-size: 24px;
+  font-weight: 600;
 }
 
 /* 浮动图标 */
@@ -195,5 +183,30 @@ const updateGitHubFile = async (path, content) => {
   font-size: 14px;
   margin-top: 10px;
   text-align: center;
+}
+
+.loading-overlay {
+  position: fixed;
+  /* 固定定位，覆盖整个页面 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  /* 水平居中 */
+  align-items: center;
+  /* 垂直居中 */
+  background-color: rgba(255, 255, 255, 0.8);
+  /* 半透明背景 */
+  backdrop-filter: blur(5px);
+  /* 背景虚化 */
+  z-index: 9999;
+  /* 确保在最上层 */
+}
+
+.loading {
+  margin-top: 10px;
+  /* 调整文字与图标的间距 */
 }
 </style>

@@ -12,7 +12,11 @@ declare module 'vue' {
     ImageUpload: typeof import('./src/components/imageUpload.vue')['default']
     VanButton: typeof import('vant/es')['Button']
     VanField: typeof import('vant/es')['Field']
+    VanIcon: typeof import('vant/es')['Icon']
+    VanImage: typeof import('vant/es')['Image']
+    VanLoading: typeof import('vant/es')['Loading']
     VanPopup: typeof import('vant/es')['Popup']
+    VanToast: typeof import('vant/es')['Toast']
     VanUploader: typeof import('vant/es')['Uploader']
   }
 }
